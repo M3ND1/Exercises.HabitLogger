@@ -1,7 +1,10 @@
 ﻿
+using System.ComponentModel.DataAnnotations;
 using System.Configuration;
 using System.Data.Entity.Core.Mapping;
 using System.Data.SQLite;
+using System.Reflection;
+
 namespace HabitLogger
 {
     class Program
@@ -31,12 +34,12 @@ namespace HabitLogger
         {
             int input;
             Console.Clear();
+            Console.WriteLine("What do you wanna do here");
+            Console.WriteLine("-------------------------\n");
             bool closeApp = false;
             while(closeApp == false)
             {
                 //Console.Clear();
-                Console.WriteLine("What do you wanna do here");
-                Console.WriteLine("-------------------------\n");
                 Console.WriteLine("0 - Exit App");
                 Console.WriteLine("1 - Insert");
                 Console.WriteLine("2 - See records");
@@ -117,7 +120,8 @@ namespace HabitLogger
                     Console.WriteLine($"Person {gym.Id} on day {gym.Data.ToString("dd-MMM-yyyy")} you were {gym.Times} time/s at gym.");
                     //Console.WriteLine($"On day {gym.Data} you were {gym.Times} time/s at gym.");
                 }
-                System.Threading.Thread.Sleep(3000);
+                //System.Threading.Thread.Sleep(3000);
+                Console.WriteLine("-----\n");
                 //Console.Clear();
             }
         }
@@ -153,16 +157,15 @@ namespace HabitLogger
             //Console.Clear();
             //readline which one (id)
             string id_name = GetId();
+            showDataType(id_name);
             string column_name = GetColumnName();
-            string data_type = GetDataType();
-
+            string data_type = GetDateInput();
             using (var conn = new SQLiteConnection(connection_string))
             {
                 conn.Open();
                 var tableCmd = conn.CreateCommand();
-                tableCmd.CommandText = $"UPDATE Gym SET '{column_name}' '{data_type}' WHERE Id = {id_name}";
+                tableCmd.CommandText = $"UPDATE Gym SET {column_name} = '{data_type}' WHERE Id = {id_name}";
                 tableCmd.ExecuteNonQuery();
-
 
                 conn.Close();
             }
@@ -171,7 +174,7 @@ namespace HabitLogger
         internal static string GetId()
         {
             Get();
-            Console.WriteLine("What Id Do you want to Update");
+            Console.WriteLine("Which Person Id do you want to Update \t To exit type: 0");
             string id_type = Console.ReadLine();
             if (id_type == "0") GetUserInput();
 
@@ -179,8 +182,7 @@ namespace HabitLogger
         }
         internal static string GetDateInput()
         {
-            Console.WriteLine("Insert Date and when you were at gym. Date format (dd-mm-yy)");
-            Console.WriteLine("To exit console type 0.");
+            Console.WriteLine("Insert Date and when you were at gym. Date format ex. 01-January-2000 \t To exit type: 0");
             string date = Console.ReadLine();
             if (date == "0") GetUserInput();
             Console.Clear();
@@ -188,20 +190,20 @@ namespace HabitLogger
         }
         internal static string GetColumnName()
         {
-            Console.WriteLine("Type Select which column you want to update: ");
+            Console.WriteLine("Type which column you want to update: ");
+            Type gym = typeof(Gym);
+            PropertyInfo[] prop = gym.GetProperties(); //array of properies in Gym.cs
+            foreach (PropertyInfo p in prop)
+            {
+                if(p.Name == "Id") continue; //dont change Id
+                Console.WriteLine(p.Name);
+            }
+            Console.WriteLine("=============");
             string column = Console.ReadLine();
             if (column == "0") GetUserInput();
-
+            Console.Clear();
             return column;
 
-        }
-        internal static string GetDataType()
-        {
-            Console.WriteLine("Type new data in column you want to edit.");
-            string data_type = Console.ReadLine();
-            if (data_type == "0") GetUserInput();
-
-            return data_type;
         }
         internal static int GetNumberInput()
         {
@@ -211,7 +213,19 @@ namespace HabitLogger
             if(times == 0) GetUserInput();
             return times;
         }
-        
+        internal static void showDataType(string data_type)
+        {
+            using(var conn= new SQLiteConnection(connection_string))
+            {
+                conn.Open();
+                var tableCmd = conn.CreateCommand();
+                tableCmd.CommandText = $"SELECT * FROM Gym where Id = '{data_type}'";
+                tableCmd.ExecuteNonQuery();
+
+                conn.Close();
+
+            }
+        }
     }
 
 }
